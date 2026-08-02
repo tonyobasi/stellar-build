@@ -1,0 +1,25 @@
+{
+  "name": "stellar-usdc-wallet-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Express microservice for generated Stellar USDC deposit wallets and deposit webhooks.",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "fund:testnet": "node scripts/fund-testnet-treasury.js",
+    "treasury:trustline": "node scripts/add-treasury-trustline.js",
+    "treasury:balance": "node scripts/treasury-balance.js",
+    "check:syntax": "find src scripts test -name '*.js' -print0 | xargs -0 -n1 node --check",
+    "check": "npm run check:syntax && node --test"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^16.2.0",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "mysql2": "^3.23.2",
+    "pino": "^9.7.0",
+    "pino-http": "^10.5.0",
+    "zod": "^4.0.14"
+  }
+}
