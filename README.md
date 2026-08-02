@@ -74,9 +74,11 @@ The production Docker stack runs:
 
 - `app`: the Node/Express Stellar USDC service
 - `mysql`: MySQL 8.4 with persistent volume storage
-- `caddy`: HTTPS reverse proxy for `stellar.saference.com`
+- optional `caddy`: HTTPS reverse proxy for `stellar.saference.com`
 
-Before starting the stack, make sure DNS for `stellar.saference.com` points to the VPS and ports `80` and `443` are open.
+By default, Compose binds the app to `127.0.0.1:3030` so an existing host Nginx can proxy to it. If the VPS is dedicated and ports `80`/`443` are free, Caddy can be enabled with `--profile caddy`.
+
+Before starting the stack, make sure DNS for `stellar.saference.com` points to the VPS and ports `80` and `443` are open on the public reverse proxy.
 
 On the server:
 
@@ -102,6 +104,14 @@ Then start:
 docker compose up -d --build
 docker compose ps
 docker compose logs -f app
+```
+
+If using host Nginx, adapt [deploy/nginx-stellar.saference.com.conf](deploy/nginx-stellar.saference.com.conf) and proxy `stellar.saference.com` to `http://127.0.0.1:3030`.
+
+If using Caddy instead of host Nginx:
+
+```bash
+docker compose --profile caddy up -d --build
 ```
 
 Check the service:
