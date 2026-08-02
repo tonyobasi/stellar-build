@@ -2,6 +2,13 @@ import mysql from 'mysql2/promise';
 
 const LOCK_PREFIX = 'stellar_usdc_wallet_service:';
 
+function sqlLimit(value, fallback, max = 1000) {
+  const numericValue = Number(value);
+  const normalized = Number.isFinite(numericValue) ? Math.trunc(numericValue) : fallback;
+
+  return Math.min(Math.max(normalized, 1), max);
+}
+
 export async function createDatabase(config) {
   const pool = mysql.createPool({
     host: config.mysql.host,
@@ -325,9 +332,11 @@ class MySqlRepository {
   }
 
   async listReadyWallets(limit = 1000) {
+    const safeLimit = sqlLimit(limit, 1000, 1000);
+
     return this.getMany(
-      'SELECT * FROM wallets WHERE status = :status ORDER BY created_at ASC LIMIT :limit',
-      { status: 'ready', limit }
+      `SELECT * FROM wallets WHERE status = :status ORDER BY created_at ASC LIMIT ${safeLimit}`,
+      { status: 'ready' }
     );
   }
 
@@ -404,6 +413,8 @@ class MySqlRepository {
   }
 
   async listDeposits({ walletId, externalUserId, network, limit = 100 } = {}) {
+    const safeLimit = sqlLimit(limit, 100, 500);
+
     if (walletId) {
       return this.getMany(
         `
@@ -413,9 +424,9 @@ class MySqlRepository {
         WHERE d.wallet_id = :walletId
           AND (:network IS NULL OR d.network = :network)
         ORDER BY d.detected_at DESC
-        LIMIT :limit
+        LIMIT ${safeLimit}
         `,
-        { walletId, network: network || null, limit }
+        { walletId, network: network || null }
       );
     }
 
@@ -428,9 +439,9 @@ class MySqlRepository {
         WHERE d.external_user_id = :externalUserId
           AND (:network IS NULL OR d.network = :network)
         ORDER BY d.detected_at DESC
-        LIMIT :limit
+        LIMIT ${safeLimit}
         `,
-        { externalUserId, network: network || null, limit }
+        { externalUserId, network: network || null }
       );
     }
 
@@ -441,9 +452,9 @@ class MySqlRepository {
       JOIN wallets w ON w.id = d.wallet_id
       WHERE (:network IS NULL OR d.network = :network)
       ORDER BY d.detected_at DESC
-      LIMIT :limit
+      LIMIT ${safeLimit}
       `,
-      { network: network || null, limit }
+      { network: network || null }
     );
   }
 
@@ -485,6 +496,8 @@ class MySqlRepository {
   }
 
   async listSentTransactions({ sourceWalletId, status, limit = 100 } = {}) {
+    const safeLimit = sqlLimit(limit, 100, 500);
+
     if (sourceWalletId) {
       return this.getMany(
         `
@@ -492,9 +505,9 @@ class MySqlRepository {
         FROM sent_transactions
         WHERE source_wallet_id = :sourceWalletId
         ORDER BY created_at DESC
-        LIMIT :limit
+        LIMIT ${safeLimit}
         `,
-        { sourceWalletId, limit }
+        { sourceWalletId }
       );
     }
 
@@ -505,9 +518,9 @@ class MySqlRepository {
         FROM sent_transactions
         WHERE status = :status
         ORDER BY created_at DESC
-        LIMIT :limit
+        LIMIT ${safeLimit}
         `,
-        { status, limit }
+        { status }
       );
     }
 
@@ -516,9 +529,9 @@ class MySqlRepository {
       SELECT *
       FROM sent_transactions
       ORDER BY created_at DESC
-      LIMIT :limit
+      LIMIT ${safeLimit}
       `,
-      { limit }
+      {}
     );
   }
 
@@ -589,6 +602,8 @@ class MySqlRepository {
   }
 
   async listDueWebhookEvents(now = nowDate(), limit = 50) {
+    const safeLimit = sqlLimit(limit, 50, 500);
+
     return this.getMany(
       `
       SELECT *
@@ -596,9 +611,9 @@ class MySqlRepository {
       WHERE status = 'pending'
         AND (next_attempt_at IS NULL OR next_attempt_at <= :now)
       ORDER BY created_at ASC
-      LIMIT :limit
+      LIMIT ${safeLimit}
       `,
-      { now, limit }
+      { now }
     );
   }
 
