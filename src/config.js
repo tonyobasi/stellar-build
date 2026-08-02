@@ -128,8 +128,8 @@ export function loadConfig(env = process.env) {
       throw new Error('Invalid configuration: APP_WEBHOOK_URL must use https in production');
     }
 
-    if (!values.MYSQL_SSL && !isLocalMysql(values.MYSQL_HOST)) {
-      throw new Error('Invalid configuration: MYSQL_SSL=true is required for non-local MySQL in production');
+    if (!values.MYSQL_SSL && !isTrustedInternalMysql(values.MYSQL_HOST)) {
+      throw new Error('Invalid configuration: MYSQL_SSL=true is required for external MySQL in production');
     }
   }
 
@@ -181,6 +181,6 @@ function parseCsv(value) {
     .filter(Boolean);
 }
 
-function isLocalMysql(host) {
-  return ['127.0.0.1', 'localhost', '::1'].includes(host);
+function isTrustedInternalMysql(host) {
+  return ['127.0.0.1', 'localhost', '::1', 'mysql'].includes(host);
 }

@@ -68,6 +68,56 @@ Start the service:
 npm run dev
 ```
 
+## Docker Deployment
+
+The production Docker stack runs:
+
+- `app`: the Node/Express Stellar USDC service
+- `mysql`: MySQL 8.4 with persistent volume storage
+- `caddy`: HTTPS reverse proxy for `stellar.saference.com`
+
+Before starting the stack, make sure DNS for `stellar.saference.com` points to the VPS and ports `80` and `443` are open.
+
+On the server:
+
+```bash
+git clone https://github.com/bashtoc/stellar-build.git
+cd stellar-build
+cp .env.docker.example .env
+```
+
+Fill `.env` with real secrets:
+
+```bash
+openssl rand -hex 32        # API_KEY
+openssl rand -base64 32     # WALLET_ENCRYPTION_KEY
+openssl rand -hex 32        # APP_WEBHOOK_SECRET, if APP_WEBHOOK_URL is set
+openssl rand -base64 32     # MYSQL_PASSWORD
+openssl rand -base64 32     # MYSQL_ROOT_PASSWORD
+```
+
+Then start:
+
+```bash
+docker compose up -d --build
+docker compose ps
+docker compose logs -f app
+```
+
+Check the service:
+
+```bash
+curl https://stellar.saference.com/health
+curl https://stellar.saference.com/v1/health -H "X-API-Key: <API_KEY>"
+```
+
+Update an existing deployment:
+
+```bash
+git pull
+docker compose up -d --build
+```
+
 ## API
 
 All `/v1/*` endpoints require:
